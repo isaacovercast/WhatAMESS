@@ -8,9 +8,27 @@ local gfx = pd.graphics
 local width = 400
 local height = 240
 
+local TILE_SIZE = 16
+local GRID_W = 25
+local GRID_H = 15
+local EMPTY = 1
+
 -- Load and set as the default for all future draw calls
 local myFont = gfx.font.new('images/fonts/font-Cuberick-Bold')
 gfx.setFont(myFont)
+
+
+-- Load the species tiles and init the tilemap
+local critters = gfx.imagetable.new("images/sprites/species")
+local map = gfx.tilemap.new()
+map:setImageTable(critters)
+map:setSize(GRID_W, GRID_H)
+for y = 1, GRID_H do
+    for x = 1, GRID_W do
+        map:setTileAtPosition(x, y, EMPTY)
+    end
+end
+
 
 -- Define splash screen
 local splashImage = gfx.image.new("images/pd-MESS2-logo")
@@ -23,8 +41,8 @@ local autoPlay = false
 local world = {}
 local nextWorld = {}
 
-local function splash()
 
+local function splash()
     if not splashShown then
         clearScreen = false
         splashImage:draw(0, 0)
@@ -42,7 +60,19 @@ local function splash()
                 playdate.buttonJustPressed("b") then
                 rulesShown = true
                 gfx.clear(gfx.kColorWhite)
+                clearScreen = true
             end
+--          local v1 = gfx.image.new("images/sprites/v000")
+--          local v2 = gfx.image.new("images/sprites/v000-8")
+--          v1:draw(10, 10)
+--          v2:draw(100, 10)
+--          local critters = gfx.imagetable.new("images/sprites/flaticon/virus")
+      
+--          critters:drawImage(1, 100, 100)
+--          critters:drawImage(2, 100, 120)
+--          critters:drawImage(3, 100, 140)
+            map:setTileAtPosition(3, 3, 3)
+            map:draw(0,0)
         end
     end
 end
@@ -108,7 +138,8 @@ local function newWorld()
 end
 
 local function initializeGame()
-	local secondsSinceEpoch = pd.getSecondsSinceEpoch()
+	
+    local secondsSinceEpoch = pd.getSecondsSinceEpoch()
 	math.randomseed(secondsSinceEpoch)
 	newWorld()
 end
@@ -151,4 +182,6 @@ function pd.update()
     	gfx.setColor(gfx.kColorBlack)
 	    drawWorld()
     end
+
+    
 end

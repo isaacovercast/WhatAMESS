@@ -13,6 +13,11 @@ Controls:
 `pdc src build`
 
 
+I loaded all species icons into an ImageTable, while
+leaving the first image as a blank tile. Create a blank 16x16 png like this:
+
+`magick -size 16x16 xc:none transparent_image.png`
+
 ## Getting Started
 
 ## Assets
