@@ -71,7 +71,12 @@ local function splash()
 --          critters:drawImage(1, 100, 100)
 --          critters:drawImage(2, 100, 120)
 --          critters:drawImage(3, 100, 140)
-            map:setTileAtPosition(3, 3, 3)
+            nspecies = critters:getSize()
+            for y = 1, GRID_H do
+                for x = 1, GRID_W do
+                    map:setTileAtPosition(x, y, math.random(nspecies))
+                end
+            end
             map:draw(0,0)
         end
     end
@@ -137,6 +142,39 @@ local function newWorld()
 	end
 end
 
+
+local cursorEnabled = true
+local cursorX = 1
+local cursorY = 1
+
+local function clampCursor()
+    if cursorX < 1 then cursorX = 1 end
+    if cursorX > GRID_W then cursorX = GRID_W end
+    if cursorY < 1 then cursorY = 1 end
+    if cursorY > GRID_H then cursorY = GRID_H end
+end
+
+local function moveCursor(dx, dy)
+    cursorX += dx
+    cursorY += dy
+    clampCursor()
+end
+
+local function drawCursor()
+    if not cursorEnabled then
+        return
+    end
+
+    local px = (cursorX - 1) * TILE_SIZE
+    local py = (cursorY - 1) * TILE_SIZE
+
+    -- outline around the selected tile
+    gfx.drawRect(px, py, TILE_SIZE, TILE_SIZE)
+
+    -- optional inner border for visibility
+    gfx.drawRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2)
+end
+
 local function initializeGame()
 	
     local secondsSinceEpoch = pd.getSecondsSinceEpoch()
@@ -183,5 +221,8 @@ function pd.update()
 	    drawWorld()
     end
 
+--    gfx.clear()
+    map:draw(0, 0)
+    drawCursor()
     
 end
