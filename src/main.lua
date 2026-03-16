@@ -8,6 +8,10 @@ local gfx = pd.graphics
 local width = 400
 local height = 240
 
+-- Load and set as the default for all future draw calls
+local myFont = gfx.font.new('images/fonts/font-Cuberick-Bold')
+gfx.setFont(myFont)
+
 -- Define splash screen
 local splashImage = gfx.image.new("images/pd-MESS2-logo")
 local splashShown = false
