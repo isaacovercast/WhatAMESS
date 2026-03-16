@@ -1,13 +1,12 @@
-# Game of Life
+# What A MESS!
+
+A playful gamified interpretation of the MESS model.
 
 Controls:
 * **N** - new world
 * **S** - switch screen clear after each frame
 * **A** - next step
 * **B** - switch autoplay
-
-![Preview](preview.png)
-
 
 
 # Building the game
