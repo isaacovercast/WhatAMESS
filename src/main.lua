@@ -19,6 +19,30 @@ local autoPlay = false
 local world = {}
 local nextWorld = {}
 
+local function splash()
+
+    if not splashShown then
+        clearScreen = false
+        splashImage:draw(0, 0)
+        if playdate.buttonJustPressed("a") or
+            playdate.buttonJustPressed("b") then
+            splashShown = true
+        end
+
+    else
+        if not rulesShown then
+            gfx.clear()
+            gfx.drawText("Put the rules here.", 150, 100)
+            gfx.drawText("Push any button to continue...", 150, 150)
+            if playdate.buttonJustPressed("a") or
+                playdate.buttonJustPressed("b") then
+                rulesShown = true
+                gfx.clear(gfx.kColorWhite)
+            end
+        end
+    end
+end
+
 local function cellIndex(x, y)
 	return 1 + x + y * width
 end
@@ -104,25 +128,9 @@ end
 initializeGame()
 
 function pd.update()
-    if not splashShown then
-        clearScreen = false
-        splashImage:draw(0, 0)
-        if playdate.buttonJustPressed("a") or
-            playdate.buttonJustPressed("b") then
-            splashShown = true
-        end
-    else
-        -- Main Game Loop
-        if not rulesShown then
-            gfx.clear()
-            gfx.drawText("Put the rules here.", 150, 100)
-            gfx.drawText("Push any button to continue...", 150, 150)
-            if playdate.buttonJustPressed("a") or
-                playdate.buttonJustPressed("b") then
-                rulesShown = true
-		        gfx.clear(gfx.kColorWhite)
-            end
-        end
+
+    if not rulesShown then
+        splash()
     end
 
 	local stepRequested = handleInput()
@@ -135,7 +143,7 @@ function pd.update()
 		gfx.clear(gfx.kColorWhite)
 	end
 
-    if splashShown and rulesShown then
+    if rulesShown then
     	gfx.setColor(gfx.kColorBlack)
 	    drawWorld()
     end
