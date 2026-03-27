@@ -20,6 +20,7 @@ leaving the first image as a blank tile. Create a blank 16x16 png like this:
 
 ## Getting Started
 
+* [A useful tutorial video on building a playdate game](https://www.youtube.com/watch?v=UZ04rk3lLqU)
 ## Assets
 
 * [1-bit Beauties](https://keenmustdie.itch.io/1-bit-beauties)
