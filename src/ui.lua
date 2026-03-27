@@ -2,8 +2,9 @@ UI = UI or {}
 
 local UI = UI
 
-local MENU_IMAGE_W = 200
-local MENU_IMAGE_H = 120
+local MENU_IMAGE_W = 400
+local MENU_IMAGE_H = 240
+local MENU_CONTENT_W = 200
 local min = math.min
 local max = math.max
 
@@ -43,10 +44,6 @@ function UI.drawHUD(community, autoPlay)
     gfx.drawText("Step " .. community.time .. "  " .. community:getModeLabel(), 12, 24)
     gfx.drawText("Species " .. community.lastRichness .. "  Dom " .. community.lastDominantAbundance, 12, 38)
     gfx.drawText(string.format("Mig %.2f  Eco %s", community.colrate, community:getEcologicalStrengthLabel()), 12, 52)
-
-    drawPanel(250, 4, 146, 52)
-    gfx.drawText(autoPlay and "Autoplay On" or "Autoplay Off", 258, 16)
-    gfx.drawText("Menu > MESS", 258, 34)
 end
 
 function UI.buildMenuImage(community)
@@ -58,25 +55,25 @@ function UI.buildMenuImage(community)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0, 0, MENU_IMAGE_W, MENU_IMAGE_H)
     gfx.setColor(gfx.kColorBlack)
-    gfx.drawRoundRect(0, 0, MENU_IMAGE_W, MENU_IMAGE_H, 6)
-    gfx.drawText("MESS", 10, 8)
-    gfx.drawText("Rank-Abundance", 10, 22)
-    gfx.drawText("Eco " .. community:getEcologicalStrengthLabel(), 116, 8)
+    gfx.drawRoundRect(0, 0, MENU_CONTENT_W, MENU_IMAGE_H, 6)
+    gfx.drawText("MESS", 12, 10)
+    gfx.drawText("Rank-Abundance", 12, 28)
+    gfx.drawText("Eco " .. community:getEcologicalStrengthLabel(), 12, 46)
 
-    local graphX = 10
-    local graphY = 42
-    local graphW = 180
-    local graphH = 64
+    local graphX = 12
+    local graphY = 72
+    local graphW = 176
+    local graphH = 144
 
     gfx.drawRect(graphX, graphY, graphW, graphH)
 
     if #abundances == 0 then
-        gfx.drawText("No species", 62, 66)
+        gfx.drawText("No species", 66, 136)
         gfx.popContext()
         return image
     end
 
-    local maxBars = min(#abundances, 20)
+    local maxBars = min(#abundances, 24)
     local maxAbundance = abundances[1]
     local slotWidth = graphW / maxBars
 
@@ -85,21 +82,21 @@ function UI.buildMenuImage(community)
         local barHeight = 0
 
         if maxAbundance > 0 then
-            barHeight = math.floor((abundance / maxAbundance) * (graphH - 4))
+            barHeight = math.floor((abundance / maxAbundance) * (graphH - 6))
         end
 
         local barWidth = max(1, math.floor(slotWidth) - 1)
         local x = graphX + math.floor((index - 1) * slotWidth) + 1
-        local y = graphY + graphH - 2 - barHeight
+        local y = graphY + graphH - 3 - barHeight
 
         gfx.fillRect(x, y, barWidth, barHeight)
     end
 
-    gfx.drawText("r", graphX + graphW - 10, graphY + graphH + 2)
-    gfx.drawText(tostring(maxAbundance), graphX + 4, graphY + 2)
+    gfx.drawText("Rank", graphX + graphW - 26, graphY + graphH + 4)
+    gfx.drawText("Max " .. tostring(maxAbundance), graphX + 4, graphY + 4)
 
     if #abundances > maxBars then
-        gfx.drawText("top " .. maxBars, graphX + 118, graphY + 2)
+        gfx.drawText("top " .. maxBars, graphX + 108, graphY + 4)
     end
 
     gfx.popContext()

@@ -26,6 +26,7 @@ local critters = gfx.imagetable.new("images/sprites/species")
 local map = gfx.tilemap.new()
 map:setImageTable(critters)
 map:setSize(GRID_W, GRID_H)
+local MENU_IMAGE_INSET = 10
 
 local game = {
     autoPlay = false,
@@ -61,7 +62,7 @@ end
 local function refreshMenuImage()
     if game.community then
         game.menuImage = UI.buildMenuImage(game.community)
-        pd.setMenuImage(game.menuImage, 0)
+        pd.setMenuImage(game.menuImage, MENU_IMAGE_INSET)
     end
 end
 
@@ -149,7 +150,7 @@ configureMenu()
 
 function pd.gameWillPause()
     if game.menuImage then
-        pd.setMenuImage(game.menuImage, 0)
+        pd.setMenuImage(game.menuImage, MENU_IMAGE_INSET)
     end
 end
 
