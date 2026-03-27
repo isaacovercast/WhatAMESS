@@ -35,6 +35,7 @@ function Community.new(tilemap, imagetable, options)
         mode = options.mode or "filtering",
         colrate = options.colrate or 0.05,
         ecologicalStrength = options.ecologicalStrength or 0.35,
+        ecologicalStrengthLabel = options.ecologicalStrengthLabel or "Medium",
         environmentOptimum = options.environmentOptimum or 0,
         time = 0,
         tiles = {},
@@ -59,9 +60,36 @@ function Community.new(tilemap, imagetable, options)
     self.catalog = SpeciesCatalog.build(imagetable)
     self.frontierCells = self:buildFrontierCells()
     self.allCells = self:buildAllCells()
+    self.neighborsRadius1, self.neighborsRadius2 = self:buildNeighborMaps()
     self:reset()
 
     return self
+end
+
+function Community:setEcologicalStrength(value, label)
+    self.ecologicalStrength = value
+
+    if label then
+        self.ecologicalStrengthLabel = label
+    end
+end
+
+function Community:getEcologicalStrengthLabel()
+    return self.ecologicalStrengthLabel
+end
+
+function Community:getRankAbundanceData()
+    local abundances = {}
+
+    for _, abundance in pairs(self.counts) do
+        abundances[#abundances + 1] = abundance
+    end
+
+    table.sort(abundances, function(left, right)
+        return left > right
+    end)
+
+    return abundances
 end
 
 function Community:buildAllCells()
@@ -99,6 +127,41 @@ function Community:buildFrontierCells()
     end
 
     return cells
+end
+
+function Community:buildNeighborMaps()
+    local radius1 = {}
+    local radius2 = {}
+
+    for index = 1, self.size do
+        local x, y = self:indexToXY(index)
+        local neighbors1 = {}
+        local neighbors2 = {}
+
+        for dy = -2, 2 do
+            for dx = -2, 2 do
+                if dx ~= 0 or dy ~= 0 then
+                    local nx = x + dx
+                    local ny = y + dy
+
+                    if nx >= 1 and nx <= self.width and ny >= 1 and ny <= self.height then
+                        local neighborIndex = self:xyToIndex(nx, ny)
+
+                        if math.abs(dx) <= 1 and math.abs(dy) <= 1 then
+                            neighbors1[#neighbors1 + 1] = neighborIndex
+                        end
+
+                        neighbors2[#neighbors2 + 1] = neighborIndex
+                    end
+                end
+            end
+        end
+
+        radius1[index] = neighbors1
+        radius2[index] = neighbors2
+    end
+
+    return radius1, radius2
 end
 
 function Community:shuffle(values)
@@ -306,87 +369,104 @@ function Community:mergeCounts(localCounts, migrantCounts)
     return merged
 end
 
-function Community:collectEmptyCells(occupied, candidates)
-    local results = {}
+function Community:createFreeCellState()
+    local state = {
+        freeCells = {},
+        freeLookup = {},
+        frontierCells = {},
+        frontierLookup = {},
+    }
 
-    for _, index in ipairs(candidates) do
-        if not occupied[index] then
-            results[#results + 1] = index
-        end
+    for _, index in ipairs(self.allCells) do
+        state.freeCells[#state.freeCells + 1] = index
+        state.freeLookup[index] = #state.freeCells
     end
 
-    return results
+    for _, index in ipairs(self.frontierCells) do
+        state.frontierCells[#state.frontierCells + 1] = index
+        state.frontierLookup[index] = #state.frontierCells
+    end
+
+    return state
 end
 
-function Community:collectNeighborCandidates(seeds, occupied, radius)
-    local candidates = {}
-    local seen = {}
+function Community:removeFromPool(pool, lookup, index)
+    local position = lookup[index]
+    if not position then
+        return
+    end
 
-    for _, seed in ipairs(seeds) do
-        local seedX, seedY = self:indexToXY(seed)
+    local lastIndex = pool[#pool]
+    pool[position] = lastIndex
+    lookup[lastIndex] = position
+    pool[#pool] = nil
+    lookup[index] = nil
+end
 
-        for dy = -radius, radius do
-            for dx = -radius, radius do
-                if dx ~= 0 or dy ~= 0 then
-                    local x = seedX + dx
-                    local y = seedY + dy
+function Community:claimFreeCell(state, index)
+    self:removeFromPool(state.freeCells, state.freeLookup, index)
+    self:removeFromPool(state.frontierCells, state.frontierLookup, index)
+end
 
-                    if x >= 1 and x <= self.width and y >= 1 and y <= self.height then
-                        local index = self:xyToIndex(x, y)
+function Community:chooseRandomFromPool(pool)
+    if #pool == 0 then
+        return nil
+    end
 
-                        if not occupied[index] and not seen[index] then
-                            seen[index] = true
-                            candidates[#candidates + 1] = index
-                        end
-                    end
-                end
+    return pool[math.random(#pool)]
+end
+
+function Community:chooseAnyFreeCell(state)
+    return self:chooseRandomFromPool(state.freeCells)
+end
+
+function Community:chooseMigrantCell(state)
+    local frontier = self:chooseRandomFromPool(state.frontierCells)
+    if frontier then
+        return frontier
+    end
+
+    return self:chooseAnyFreeCell(state)
+end
+
+function Community:attemptNeighborPlacement(state, seeds, neighborMap, attempts)
+    local seedCount = #seeds
+    if seedCount == 0 then
+        return nil
+    end
+
+    for _ = 1, attempts do
+        local seed = seeds[math.random(seedCount)]
+        local neighbors = neighborMap[seed]
+
+        if neighbors and #neighbors > 0 then
+            local neighbor = neighbors[math.random(#neighbors)]
+            if state.freeLookup[neighbor] then
+                return neighbor
             end
         end
     end
 
-    return candidates
+    return nil
 end
 
-function Community:chooseRandomCandidate(candidates)
-    if #candidates == 0 then
-        return nil
+function Community:chooseClusteredCell(state, seeds)
+    local cell = self:attemptNeighborPlacement(state, seeds, self.neighborsRadius1, 12)
+    if cell then
+        return cell
     end
 
-    return candidates[math.random(#candidates)]
-end
-
-function Community:chooseAnyEmptyCell(occupied)
-    return self:chooseRandomCandidate(self:collectEmptyCells(occupied, self.allCells))
-end
-
-function Community:chooseMigrantCell(occupied)
-    local frontier = self:collectEmptyCells(occupied, self.frontierCells)
-    if #frontier > 0 then
-        return self:chooseRandomCandidate(frontier)
+    cell = self:attemptNeighborPlacement(state, seeds, self.neighborsRadius2, 20)
+    if cell then
+        return cell
     end
 
-    return self:chooseAnyEmptyCell(occupied)
+    return self:chooseAnyFreeCell(state)
 end
 
-function Community:chooseClusteredCell(seeds, occupied)
-    if #seeds > 0 then
-        local adjacent = self:collectNeighborCandidates(seeds, occupied, 1)
-        if #adjacent > 0 then
-            return self:chooseRandomCandidate(adjacent)
-        end
-
-        local nearby = self:collectNeighborCandidates(seeds, occupied, 2)
-        if #nearby > 0 then
-            return self:chooseRandomCandidate(nearby)
-        end
-    end
-
-    return self:chooseAnyEmptyCell(occupied)
-end
-
-function Community:placeSpeciesAtCell(nextTiles, occupied, positions, index, speciesId)
+function Community:placeSpeciesAtCell(nextTiles, state, positions, index, speciesId)
     nextTiles[index] = speciesId
-    occupied[index] = true
+    self:claimFreeCell(state, index)
 
     local speciesPositions = positions[speciesId]
     if not speciesPositions then
@@ -415,7 +495,7 @@ end
 
 function Community:buildNextTiles(localCounts, migrantCounts)
     local nextTiles = {}
-    local occupied = {}
+    local freeState = self:createFreeCellState()
     local nextPositions = {}
 
     local migrantQueue = {}
@@ -427,9 +507,9 @@ function Community:buildNextTiles(localCounts, migrantCounts)
     self:shuffle(migrantQueue)
 
     for _, speciesId in ipairs(migrantQueue) do
-        local cell = self:chooseMigrantCell(occupied)
+        local cell = self:chooseMigrantCell(freeState)
         if cell then
-            self:placeSpeciesAtCell(nextTiles, occupied, nextPositions, cell, speciesId)
+            self:placeSpeciesAtCell(nextTiles, freeState, nextPositions, cell, speciesId)
         end
     end
 
@@ -453,9 +533,9 @@ function Community:buildNextTiles(localCounts, migrantCounts)
         end
 
         for _ = 1, entry.count do
-            local cell = self:chooseClusteredCell(seeds, occupied)
+            local cell = self:chooseClusteredCell(freeState, seeds)
             if cell then
-                self:placeSpeciesAtCell(nextTiles, occupied, nextPositions, cell, entry.id)
+                self:placeSpeciesAtCell(nextTiles, freeState, nextPositions, cell, entry.id)
                 seeds[#seeds + 1] = cell
             end
         end
