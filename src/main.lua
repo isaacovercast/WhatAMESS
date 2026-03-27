@@ -176,7 +176,6 @@ local function drawCursor()
 end
 
 local function initializeGame()
-	
     local secondsSinceEpoch = pd.getSecondsSinceEpoch()
 	math.randomseed(secondsSinceEpoch)
 	newWorld()
@@ -221,7 +220,6 @@ function pd.update()
 	    drawWorld()
     end
 
---    gfx.clear()
     map:draw(0, 0)
     drawCursor()
     
