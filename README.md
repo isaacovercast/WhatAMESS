@@ -1,6 +1,8 @@
 # What A MESS!
 
-A playful gamified interpretation of the MESS model.
+A playful gamified interpretation of the [MESS](https://github.com/messDiv/MESS)  model.
+
+![Gameplay Preview](GameplayPreview.gif)
 
 Controls:
 * **N** - new world
