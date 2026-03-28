@@ -5,22 +5,17 @@ A playful gamified interpretation of the [MESS](https://github.com/messDiv/MESS)
 ![Gameplay Preview](GameplayPreview.gif)
 
 Controls:
-* **N** - new world
-* **S** - switch screen clear after each frame
-* **A** - next step
-* **B** - switch autoplay
+* **L/R** - Change Migration Rate
+* **U/D** - Change Community Assembly Dynamics
+* **A** - Run one step of the model
+* **B** - Toggle autoplay
 
+Access the Menu to change Ecological Strength.
+
+## Dev Notes
 
 # Building the game
 `pdc src build`
-
-
-I loaded all species icons into an ImageTable, while
-leaving the first image as a blank tile. Create a blank 16x16 png like this:
-
-`magick -size 16x16 xc:none transparent_image.png`
-
-## Getting Started
 
 * [A useful tutorial video on building a playdate game](https://www.youtube.com/watch?v=UZ04rk3lLqU)
 ## Assets
@@ -32,10 +27,13 @@ leaving the first image as a blank tile. Create a blank 16x16 png like this:
 Importing and ditherting and brightness/exposure tuning for MESS logo splash screen
 * [PlayDither](https://potch.me/demos/playdither/)
 
+I loaded all species icons into an ImageTable, while
+leaving the first image as a blank tile. Create a blank 16x16 png like this:
+
+`magick -size 16x16 xc:none transparent_image.png`
+
 ## License
 This project is licensed under the Unlicense - see the [LICENSE](LICENSE) file for details.
-
-All Playdate imagery and trademarks are property of [Panic, Inc](https://panic.com). No copyright intended 😬.
 
 
 
